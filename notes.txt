@@ -1,0 +1,7 @@
+Dataset Description
+The model is trained and evaluated using the Defactify Image Dataset (specifically the Defactify_Image_Dataset on Hugging Face), a 
+comprehensive benchmark collection consisting of 96,000 high-quality images and corresponding metadata. The authentic baseline images 
+are sourced directly from the MS COCO dataset, while the synthetic counterparts are meticulously generated using five state-of-the-art 
+AI models: Stable Diffusion 2.1, SDXL, Stable Diffusion 3, DALL-E 3, and Midjourney v6. The data is split into a training set of 42,000 
+samples, a validation set of 9,000 samples, and a testing set of 45,000 samples, with annotations structuring both binary (real/fake) and
+multi-class source identification tasks.

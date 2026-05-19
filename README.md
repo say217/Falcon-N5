@@ -1,9 +1,15 @@
 # Falcon N5: AI vs. Original Image Classification
 
-This repository contains tools and models for detecting AI-generated images using the Swin Transformer architecture.
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black)
+![Seaborn](https://img.shields.io/badge/Seaborn-%23000000.svg?style=for-the-badge&logo=Seaborn&logoColor=white)
+![Timm](https://img.shields.io/badge/Timm-red?style=for-the-badge)
+![Neural Network](https://img.shields.io/badge/Neural%20Network-blue?style=for-the-badge)
 
 ## Overview
-The project uses the **Swin Transformer (swin_base_patch4_window7_224)** to classify images as either "Original (Real)" or "AI Generated". It includes a training notebook and inference scripts, along with Grad-CAM visualization to explain the model's focus.
+Project Falcon N5 focuses on building a robust computer vision classifier capable of distinguishing between authentic, human-created images and AI-generated content. Leveraging the powerful Swin Transformer architecture (swin_base_patch4_window7_224), the model is trained to perform binary classification to tackle the growing challenge of digital forgery and artificial content verification. Because the training pipeline encounters an imbalanced distribution of real versus synthetic media, Falcon N5 incorporates a strategically weighted cross-entropy loss function to ensure the model penalizes misclassifications on minority "Real" data heavily, ultimately achieving high validation accuracy and reliable prediction confidence.
 
 ## Project Structure
 - `ai-vs-original-image-classification.ipynb`: Jupyter notebook for training, evaluation, and visualization.
@@ -28,4 +34,6 @@ python code/load_model.py
 ```
 
 ## Dataset
-This project was trained on the [Defactify Image Dataset](https://huggingface.co/datasets/Rajarshi-Roy-research/Defactify_Image_Dataset), which includes 96,000 images from both real (MS COCO) and synthetic sources (Stable Diffusion, Midjourney, etc.).
+The model is trained and evaluated using the comprehensive Defactify Image Dataset, a benchmark collection consisting of 96,000 high-quality images and corresponding metadata. The authentic baseline images are sourced directly from the MS COCO dataset, while the synthetic counterparts are meticulously generated using five state-of-the-art AI models: Stable Diffusion 2.1, SDXL, Stable Diffusion 3, DALL-E 3, and Midjourney v6. For the Falcon N5 training pipeline, the data is partitioned into a training set of 42,000 samples, a validation set of 9,000 samples, and a testing set of 45,000 samples, with annotations structuring both binary real-versus-fake detection and multi-class source identification.
+
+[Defactify Image Dataset](https://huggingface.co/datasets/Rajarshi-Roy-research/Defactify_Image_Dataset)
