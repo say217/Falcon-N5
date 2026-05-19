@@ -8,6 +8,8 @@
 ![Timm](https://img.shields.io/badge/Timm-red?style=for-the-badge)
 ![Neural Network](https://img.shields.io/badge/Neural%20Network-blue?style=for-the-badge)
 
+<img width="704" height="359" alt="image" src="https://github.com/user-attachments/assets/2545e899-0d76-4cc4-9692-e636b88213d0" />
+
 ## Overview
 Project Falcon N5 focuses on building a robust computer vision classifier capable of distinguishing between authentic, human-created images and AI-generated content. Leveraging the powerful Swin Transformer architecture (swin_base_patch4_window7_224), the model is trained to perform binary classification to tackle the growing challenge of digital forgery and artificial content verification. Because the training pipeline encounters an imbalanced distribution of real versus synthetic media, Falcon N5 incorporates a strategically weighted cross-entropy loss function to ensure the model penalizes misclassifications on minority "Real" data heavily, ultimately achieving high validation accuracy and reliable prediction confidence.
 
