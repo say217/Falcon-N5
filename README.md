@@ -34,8 +34,10 @@ To test the model on a single image, update the `image_path` in `code/load_model
 ```bash
 python code/load_model.py
 ```
-
 ## Dataset
-The model is trained and evaluated using the comprehensive Defactify Image Dataset, a benchmark collection consisting of 96,000 high-quality images and corresponding metadata. The authentic baseline images are sourced directly from the MS COCO dataset, while the synthetic counterparts are meticulously generated using five state-of-the-art AI models: Stable Diffusion 2.1, SDXL, Stable Diffusion 3, DALL-E 3, and Midjourney v6. For the Falcon N5 training pipeline, the data is partitioned into a training set of 42,000 samples, a validation set of 9,000 samples, and a testing set of 45,000 samples, with annotations structuring both binary real-versus-fake detection and multi-class source identification.
 
-[Defactify Image Dataset](https://huggingface.co/datasets/Rajarshi-Roy-research/Defactify_Image_Dataset)
+**AI-vs-Real Dataset**
+A balanced dataset for AI-generated vs Real image classification. 
+This dataset is designed to help researchers, developers, and practitioners build and evaluate models that can distinguish between synthetic (AI-generated) and authentic (human-captured) images.
+
+👉 **Link:** [Parveshiiii/AI-vs-Real Dataset](https://huggingface.co/datasets/Parveshiiii/AI-vs-Real)

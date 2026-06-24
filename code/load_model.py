@@ -1,80 +1,107 @@
 import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
 import numpy as np
+import cv2
 import matplotlib.pyplot as plt
-import timm
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
-
 from PIL import Image
+from torchvision import transforms
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model_path = r'model\Hornet_M1.pth'
+image_path = r'Images\Screenshot 2026-05-20 155120.png'
+label_map = {0: "AI-generated", 1: "Real"}
 
-model = timm.create_model("swin_base_patch4_window7_224", pretrained=False, num_classes=2)
-model.load_state_dict(torch.load("model/swin_ai_detector.pth", map_location=device))
-model = model.to(device)
-model.eval()
+device = torch.device("cpu")
+print(f"Using Device: {device}")
 
-test_transform = transforms.Compose([
+
+print(f"Loading model from {model_path}...")
+# map_location='cpu' prevents crash if weights were extracted from a GPU run
+loaded_model = torch.load(model_path, map_location=device, weights_only=False)
+loaded_model = loaded_model.to(device)
+loaded_model.eval()
+
+# Load image
+orig_img = Image.open(image_path).convert('RGB')
+
+inference_transforms = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-
-image_path = "Images\Screenshot 2026-05-20 155120.png" # Change this to your test image path
-
-rgb_img = Image.open(image_path).convert("RGB")
-    
-input_tensor = test_transform(rgb_img).unsqueeze(0).to(device)
+img_tensor = inference_transforms(orig_img).unsqueeze(0).to(device)
 
 with torch.no_grad():
-    output = model(input_tensor)
-    probabilities = torch.softmax(output, dim=1)[0]
-    
-class_names = ["Original (Real)", "AI Generated"]
-pred_class_id = torch.argmax(probabilities).item()
-pred_class_name = class_names[pred_class_id]
-pred_confidence = probabilities[pred_class_id].item() * 100
+    outputs = loaded_model(img_tensor)
+    probabilities = torch.softmax(outputs, dim=1).cpu().numpy()[0]
+    predicted_class = np.argmax(probabilities)
 
-target_layers = [model.layers[-1].blocks[-1].norm1]
+pred_label = label_map[predicted_class]
+confidence = probabilities[predicted_class] * 100
 
-def reshape_transform(tensor, height=7, width=7):
-    if len(tensor.shape) == 4:
-        B, H, W, C = tensor.shape
-        result = tensor.permute(0, 3, 1, 2)
-        return result
-    elif len(tensor.shape) == 3:
-        B, N, C = tensor.shape
-        result = tensor.reshape(B, height, width, C)
-        result = result.permute(0, 3, 1, 2)
-        return result
-    return tensor
+print("\n" + "="*40)
+print("         CLASS PROBABILITIES")
+print("="*40)
+for class_idx, label_name in label_map.items():
+    prob_percent = probabilities[class_idx] * 100
+    print(f"-> {label_name:<15}: {prob_percent:.2f}%")
+print("="*40)
+print(f"Final Prediction: {pred_label} ({confidence:.2f}% Confidence)\n")
 
-cam = GradCAM(model=model, target_layers=target_layers, reshape_transform=reshape_transform)
-grayscale_cam = cam(input_tensor=input_tensor, targets=None)[0, :]
+gray_img = np.array(orig_img.convert('L'))
+h, w = gray_img.shape
 
-img_resized = rgb_img.resize((224, 224))
-img_array = np.float32(img_resized) / 255.0
-visualization = show_cam_on_image(img_array, grayscale_cam, use_rgb=True)
+fft = np.fft.fft2(gray_img)
+fft_shift = np.fft.fftshift(fft)
+magnitude_spectrum = 20 * np.log(np.abs(fft_shift) + 1)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+y, x = np.indices((h, w))
+center_y, center_x = h // 2, w // 2
+angles = np.arctan2(y - center_y, x - center_x)
+angle_bins = np.linspace(-np.pi, np.pi, 360)
+angular_energy = np.zeros(359)
 
-ax1.imshow(img_resized)
-ax1.set_title("Input Test Image", fontsize=12, fontweight='bold')
-ax1.axis("off")
+for i in range(359):
+    mask = (angles >= angle_bins[i]) & (angles < angle_bins[i+1])
+    angular_energy[i] = np.mean(magnitude_spectrum[mask])
 
-ax2.imshow(visualization)
-ax2.set_title("Swin Patch Attention (Grad-CAM)", fontsize=12, fontweight='bold')
-ax2.axis("off")
+# ==========================================
+plt.style.use('dark_background')
+fig = plt.figure(figsize=(16, 12))
 
-plt.suptitle(f"Prediction: {pred_class_name} ({pred_confidence:.2f}% Confidence)", 
-             fontsize=14, fontweight='bold', y=0.98, color='darkgreen' if pred_class_id == 0 else 'darkred')
+# --- Plot 1: Original Image & Prediction ---
+ax1 = plt.subplot(2, 2, 1)
+ax1.imshow(orig_img)
+ax1.axis('off')
+ax1.set_title(f"Prediction: {pred_label}\nConfidence: {confidence:.2f}%", 
+              fontsize=14, color='#00ffcc', weight='bold', pad=10)
 
-print("--- Prediction Results ---")
-for i, name in enumerate(class_names):
-    print(f"{name}: {probabilities[i].item()*100:.2f}%")
+ax2 = plt.subplot(2, 2, 2)
+colors = ('r', 'g', 'b')
+img_np = np.array(orig_img)
+for i, color in enumerate(colors):
+    histogram, bin_edges = np.histogram(img_np[:, :, i], bins=256, range=(0, 256))
+    ax2.plot(bin_edges[0:-1], histogram, color=color, alpha=0.8, linewidth=1.5, label=color.upper())
+
+ax2.fill_between(bin_edges[0:-1], histogram, color='gray', alpha=0.1)
+ax2.set_title("Pixel-Level Color Frequency", fontsize=12, weight='bold', pad=10)
+ax2.set_xlabel("Pixel Intensity Value (0 - 255)", color='#aaaaaa')
+ax2.set_ylabel("Pixel Count", color='#aaaaaa')
+ax2.grid(True, linestyle='--', alpha=0.3)
+ax2.legend()
+
+ax3 = plt.subplot(2, 2, 3)
+shading = ax3.imshow(magnitude_spectrum, cmap='magma')
+ax3.axis('off')
+ax3.set_title("Magnitude Spectrum (FFT)", fontsize=12, weight='bold', pad=10)
+fig.colorbar(shading, ax=ax3, fraction=0.046, pad=0.04).ax.tick_params(labelsize=8)
+
+ax4 = plt.subplot(2, 2, 4, projection='polar')
+theta = np.linspace(-np.pi, np.pi, 359)
+ax4.plot(theta, angular_energy, color='#ffcc00', linewidth=2)
+ax4.fill(theta, angular_energy, color='#ffcc00', alpha=0.2)
+ax4.set_title("Directional Frequency Energy", fontsize=12, color='#00ffcc', weight='bold', pad=15)
+ax4.tick_params(colors='#aaaaaa')
+ax4.grid(True, linestyle=':', alpha=0.4)
 
 plt.tight_layout()
 plt.show()
