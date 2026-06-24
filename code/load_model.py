@@ -22,7 +22,8 @@ test_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-image_path = "path/to/your/image.jpg" # Change this to your test image path
+
+image_path = "Images\Screenshot 2026-05-20 155120.png" # Change this to your test image path
 
 rgb_img = Image.open(image_path).convert("RGB")
     
